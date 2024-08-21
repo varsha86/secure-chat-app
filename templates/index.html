@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Application</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            background-color: #24292e;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: bold;
+        }
+
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+            color: #24292e;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .container div {
+            margin-bottom: 15px;
+        }
+
+        .container input[type="text"], .container input[type="password"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .container button {
+            padding: 10px 20px;
+            background-color: #24292e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .container button:hover {
+            background-color: #3b4045;
+        }
+
+        .footer {
+            background-color: #24292e;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .footer a {
+            color: #cfd0d1;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="#home">Home</a>
+        <a href="#about">About</a>
+        <a href="#features">Features</a>
+        <a href="#contact">Contact</a>
+    </nav>
+
+    <h1>Chat Application</h1>
+
+    <div class="container">
+        <div>
+            <input id="reg-username" type="text" placeholder="Username">
+            <input id="reg-password" type="password" placeholder="Password">
+            <button onclick="register()">Register</button>
+        </div>
+        <div>
+            <input id="login-username" type="text" placeholder="Username">
+            <input id="login-password" type="password" placeholder="Password">
+            <button onclick="login()">Login</button>
+        </div>
+        <div>
+            <input id="recipient" type="text" placeholder="Recipient">
+            <input id="message" type="text" placeholder="Message">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+        <div id="chat"></div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2024 Chat Application. All rights reserved.</p>
+        <p><a href="https://github.com/yourusername/yourrepository">Visit our GitHub Repository</a></p>
+    </footer>
+
+    <script>
+        const socket = io();
+
+        function register() {
+            const username = document.getElementById('reg-username').value;
+            const password = document.getElementById('reg-password').value;
+
+            fetch('/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            }).then(response => response.json())
+              .then(data => alert(data.message));
+        }
+
+        function login() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+
+            fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            }).then(response => response.json())
+              .then(data => {
+                  alert(data.message);
+                  if (data.message === 'Login successful') {
+                      socket.emit('join', { username: username });
+                  }
+              });
+        }
+
+        function sendMessage() {
+            const sender = document.getElementById('login-username').value;
+            const recipient = document.getElementById('recipient').value;
+            const message = document.getElementById('message').value;
+
+            socket.emit('message', { sender, recipient, message });
+        }
+
+        socket.on('receive_message', function(data) {
+            const chat = document.getElementById('chat');
+            const messageElement = document.createElement('div');
+            messageElement.innerText = 'Encrypted message received';
+            chat.appendChild(messageElement);
+        });
+
+        socket.on('error', function(data) {
+            alert(data.message);
+        });
+    </script>
+</body>
+</html>
